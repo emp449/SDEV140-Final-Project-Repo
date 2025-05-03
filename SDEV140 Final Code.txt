@@ -1,0 +1,74 @@
+import tkinter as tk
+from tkinter import messagebox
+import os
+import json
+
+# File to save tasks
+TASK_FILE = "tasks.json"
+
+class DailyTaskTracker:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Daily Task Tracker")
+        self.tasks = []
+
+        # Create UI Elements
+        self.frame = tk.Frame(root)
+        self.frame.pack(pady=10)
+
+        self.task_entry = tk.Entry(self.frame, width=40)
+        self.task_entry.grid(row=0, column=0, padx=5)
+
+        self.add_button = tk.Button(self.frame, text="Add Task", width=10, command=self.add_task)
+        self.add_button.grid(row=0, column=1)
+
+        self.tasks_frame = tk.Frame(root)
+        self.tasks_frame.pack()
+
+        self.load_tasks()
+
+        self.save_button = tk.Button(root, text="Save Tasks", command=self.save_tasks)
+        self.save_button.pack(pady=10)
+
+    def add_task(self):
+        task_text = self.task_entry.get()
+        if task_text:
+            var = tk.IntVar()
+            cb = tk.Checkbutton(self.tasks_frame, text=task_text, variable=var)
+            cb.var = var
+            cb.pack(anchor='w')
+            self.tasks.append(cb)
+            self.task_entry.delete(0, tk.END)
+        else:
+            messagebox.showwarning("Input Error", "Please enter a task.")
+
+    def delete_task(self, task_checkbutton):
+        task_checkbutton.destroy()
+        self.tasks.remove(task_checkbutton)
+
+    def save_tasks(self):
+        tasks_data = []
+        for task in self.tasks:
+            tasks_data.append({
+                "text": task.cget("text"),
+                "completed": task.var.get()
+            })
+        with open(TASK_FILE, "w") as f:
+            json.dump(tasks_data, f)
+        messagebox.showinfo("Success", "Tasks saved successfully!")
+
+    def load_tasks(self):
+        if os.path.exists(TASK_FILE):
+            with open(TASK_FILE, "r") as f:
+                tasks_data = json.load(f)
+            for task in tasks_data:
+                var = tk.IntVar(value=task["completed"])
+                cb = tk.Checkbutton(self.tasks_frame, text=task["text"], variable=var)
+                cb.var = var
+                cb.pack(anchor='w')
+                self.tasks.append(cb)
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = DailyTaskTracker(root)
+    root.mainloop()
